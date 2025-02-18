@@ -65,6 +65,7 @@ const Home = () => {
 
   // Stop the game and reset grids
   const handleStopGame = () => {
+    deleteRecords();
     setUser1Grid(Array(3).fill(Array(3).fill("")));
     setUser2Grid(Array(3).fill(Array(3).fill("")));
     setUser1Cuts(Array(3).fill(Array(3).fill(false)));
@@ -148,6 +149,7 @@ const Home = () => {
   };
 
   const deleteRecords = async () => {
+    if(!res?.user1?._id || !res?.user2?._id) return;
     try {
       await axiosInstance.post("/api/game/delete",{  
         uid1: res?.user1?._id, 
@@ -167,7 +169,6 @@ const Home = () => {
     socket.on("userWon", (data) => {
         console.log(data);
         setWinner(data.user);
-        deleteRecords();
     });
 
     return () => {
@@ -179,7 +180,7 @@ const Home = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Lottery Game</h1>
       <div className="flex items-center justify-center">
-        {winner && <p className="text-xl font-bold">Winner: {winner.userId}</p>}
+        {winner && <p className="text-3xl text-green-500 font-bold">Winner: {winner.userId}</p>}
       </div>
       <div className="max-w-screen-md">
 
@@ -285,7 +286,7 @@ const Home = () => {
         <Button onClick={handleStopGame} disabled={!gameStarted}>
           Stop Game
         </Button>
-        <Button onClick={generateRandomNumber} disabled={!gameStarted || isGenerating || !winner}>
+        <Button onClick={generateRandomNumber} disabled={!gameStarted || isGenerating || winner}>
           Generate Number
         </Button>
       </div>

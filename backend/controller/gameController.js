@@ -73,6 +73,7 @@ export const endGame = async (req, res) => {
     try{
         await User.findOneAndDelete({ _id: uid1 });
         await User.findOneAndDelete({ _id: uid2 });
+        res.status(200).json({ message: "Game ended successfully" });
     }catch(error) {
         res.status(500).json({ error: error });
     }  
