@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import expressWinston from "express-winston";
 import logger from "./utils/logger.js";
+import { connectDB } from "./db/connect.js";
 
 dotenv.config();
 
@@ -12,6 +13,8 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cors());
 
+connectDB();
+
 app.use(expressWinston.logger({
     winstonInstance: logger,
     meta: true, 
@@ -19,8 +22,8 @@ app.use(expressWinston.logger({
     colorize: true, 
 }));
 
-app.get("/", (req, res) => {
-    res.send("Hello World!");
+app.get("/health", (req, res) => {
+    res.status(200).send("Server is running");
 });
 
 app.listen(port, () => {
