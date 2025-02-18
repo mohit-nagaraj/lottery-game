@@ -18,6 +18,7 @@ const Home = () => {
   const [user2Cuts, setUser2Cuts] = useState<Cuts>(Array(3).fill(Array(3).fill(false)))
   const [gameStarted, setGameStarted] = useState<boolean>(false)
   const [generatedNumbers, setGeneratedNumbers] = useState<number[]>([])
+  const [res, setRes] = useState<any>({})
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [timer, setTimer] = useState<number>(0)
 
@@ -48,6 +49,7 @@ const Home = () => {
       const data =  response.data;
       setGameStarted(true);
       console.log("Game started:", data);
+      setRes(data?.users || {})
     } catch (error) {
       console.error("Error starting game:", error);
       toast({
@@ -93,7 +95,6 @@ const Home = () => {
     setIsGenerating(true);
     setTimer(2);
 
-    // Start a 2-second timer
     const interval = setInterval(() => {
       setTimer((prev) => prev - 1);
     }, 1000);
@@ -104,12 +105,15 @@ const Home = () => {
     const number = Math.floor(Math.random() * 9) + 1;
     if (generatedNumbers.includes(number)) {
       setIsGenerating(false);
-      return; // Skip if number already generated
+      toast({
+        title: "Number already generated!",
+        description: "This number has already been generated. Please try again!",
+      })
+      return;
     }
 
-    setGeneratedNumbers([...generatedNumbers, number]);
+    setGeneratedNumbers(prev=>[...prev, number]);
 
-    // Update cuts for both users
     const newUser1Cuts = user1Grid.map((row, i) =>
       row.map((cell, j) => (cell === number ? true : user1Cuts[i][j]))
     );
@@ -120,17 +124,20 @@ const Home = () => {
     setUser1Cuts(newUser1Cuts);
     setUser2Cuts(newUser2Cuts);
 
-    // Send the number to the backend
     try {
-      await fetch("http://localhost:5000/api/game/cut", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ number }),
-      });
+      axiosInstance.post("/api/game/cut", {  
+        uid1: res?.user1?._id, 
+        user1Cuts: newUser1Cuts, 
+        uid2: res?.user2?._id,
+        user2Cuts: newUser2Cuts
+      })
     } catch (error) {
       console.error("Error cutting number:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request. You can try again!",
+      })
     }
 
     setIsGenerating(false);
@@ -142,7 +149,7 @@ const Home = () => {
       <div className="flex items-center justify-center"></div>
       <div className="max-w-screen-md">
 
-      <div className="grid grid-cols-2 gap-4">
+      {!gameStarted&&<div className="grid grid-cols-2 gap-4">
         {/* User 1 Grid */}
         <Card>
           <CardHeader>
@@ -192,11 +199,11 @@ const Home = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>}
       
 
       {/* Display Cuts */}
-      {gameStarted&&<div className="mt-8">
+      {gameStarted&&<div className="">
         <h2 className="text-xl font-bold mb-4">Cuts</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -256,6 +263,22 @@ const Home = () => {
           <p>Generating number in {timer} seconds...</p>
         </div>
       )}
+
+      {/* Generated Numbers */}
+      {gameStarted&&<div className="mt-4">
+        <h2 className="text-xl font-bold mb-4">Generated Numbers</h2>
+        <div className="flex space-x-4">
+          {generatedNumbers.map((number, i) => (
+            <div
+              key={`generated-number-${i}`}
+              className="p-4 border rounded-lg text-center bg-white"
+            >
+              {number}
+            </div>
+          ))}
+        </div>
+      </div>}
+      
       </div>
     </div>
   );

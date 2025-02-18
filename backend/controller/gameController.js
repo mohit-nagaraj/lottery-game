@@ -1,4 +1,5 @@
 import { User } from "../models/userModel.js";
+import logger from "../utils/logger.js";
 
 export const startGame = async (req, res) => {
     const { user1Grid, user2Grid } = req.body;
@@ -33,6 +34,31 @@ export const startGame = async (req, res) => {
             user2: u2,
         }});
     } catch (error) {
+        console.log("Error:", error);
+        logger.error(error)
         res.status(500).json({ error: "Error starting game" });
+    }
+}
+
+export const cutNumber = async (req, res) => {
+    const { uid1, uid2, user1Cuts, user2Cuts } = req.body;
+    if(!uid1 || !uid2 || !user2Cuts || !user1Cuts) {
+        return res.status(400).json({ error: "Invalid request" });
+    }
+
+    try{
+        await User.findOneAndUpdate(
+            { _id: uid1 },
+            {cuts: user1Cuts},
+        )
+
+        await User.findOneAndUpdate(
+            { _id: uid2 },
+            {cuts: user2Cuts},
+        )
+        
+        res.status(200).json({ message: "Cuts updated successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error });
     }
 }
