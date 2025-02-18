@@ -147,10 +147,27 @@ const Home = () => {
     setIsGenerating(false);
   };
 
+  const deleteRecords = async () => {
+    try {
+      await axiosInstance.post("/api/game/delete",{  
+        uid1: res?.user1?._id, 
+        uid2: res?.user2?._id,
+      });
+    } catch (error) {
+      console.error("Error deleting records:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request. You can try again!",
+      })
+    }
+  }
+
   useEffect(() => {
     socket.on("userWon", (data) => {
         console.log(data);
         setWinner(data.user);
+        deleteRecords();
     });
 
     return () => {

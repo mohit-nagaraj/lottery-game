@@ -12,11 +12,7 @@ const userSchema = new Schema({
     cuts: { 
         type: [[Boolean]], 
         default: Array(3).fill(Array(3).fill(false)),
-    },
-    isWinner: { 
-        type: Boolean, 
-        default: false,
-    },
+    }
 });
 
 export const User = model("User", userSchema);

@@ -62,3 +62,18 @@ export const cutNumber = async (req, res) => {
         res.status(500).json({ error: error });
     }
 }
+
+export const endGame = async (req, res) => {
+    const { uid1, uid2 } = req.body;
+
+    if(!uid1 || !uid2) {
+        return res.status(400).json({ error: "Invalid request" });
+    }
+
+    try{
+        await User.findOneAndDelete({ _id: uid1 });
+        await User.findOneAndDelete({ _id: uid2 });
+    }catch(error) {
+        res.status(500).json({ error: error });
+    }  
+}
