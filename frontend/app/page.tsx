@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import axiosInstance from "@/util/interceptor";
+import { useToast } from "@/hooks/use-toast";
 
 // Define types
 type Grid = (number | string)[][];
@@ -18,6 +20,8 @@ const Home = () => {
   const [generatedNumbers, setGeneratedNumbers] = useState<number[]>([])
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [timer, setTimer] = useState<number>(0)
+
+  const { toast } = useToast()
 
   // Handle input change for a specific grid
   const handleChange = (user: "user1" | "user2", row: number, col: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,20 +42,19 @@ const Home = () => {
       return;
     }
 
-    setGameStarted(true);
     // Send grids to the backend
     try {
-      const response = await fetch("http://localhost:5000/api/game/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user1Grid, user2Grid }),
-      });
-      const data = await response.json();
+      const response = await axiosInstance.post("/api/game/start", { user1Grid, user2Grid })
+      const data =  response.data;
+      setGameStarted(true);
       console.log("Game started:", data);
     } catch (error) {
       console.error("Error starting game:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request. You can try again!",
+      })
     }
   };
 
@@ -69,13 +72,19 @@ const Home = () => {
 
   // Validate grids for unique numbers between 1-9
   const validateGrids = (): boolean => {
-    const allNumbersU1 = user1Grid.flat()
-    const allNumbersU2 = user2Grid.flat()
+    const allNumbersU1 = user1Grid.flat();
+    const allNumbersU2 = user2Grid.flat();
+  
+    const hasDuplicatesU1 = new Set(allNumbersU1).size !== allNumbersU1.length;
+    const hasDuplicatesU2 = new Set(allNumbersU2).size !== allNumbersU2.length;
+  
     return (
       allNumbersU1.length === 9 &&
       allNumbersU1.every((num) => typeof num === "number" && num >= 1 && num <= 9) &&
+      !hasDuplicatesU1 &&
       allNumbersU2.length === 9 &&
-      allNumbersU2.every((num) => typeof num === "number" && num >= 1 && num <= 9) 
+      allNumbersU2.every((num) => typeof num === "number" && num >= 1 && num <= 9) &&
+      !hasDuplicatesU2
     );
   };
 
