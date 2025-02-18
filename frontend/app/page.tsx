@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import axiosInstance from "@/util/interceptor";
 import { useToast } from "@/hooks/use-toast";
+import { io } from "socket.io-client";
 
-// Define types
 type Grid = (number | string)[][];
 type Cuts = boolean[][];
+
+const socket = io("http://localhost:5001");
 
 const Home = () => {
   // State variables
@@ -21,6 +23,7 @@ const Home = () => {
   const [res, setRes] = useState<any>({})
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [timer, setTimer] = useState<number>(0)
+  const [winner, setWinner] = useState<any>(null);
 
   const { toast } = useToast()
 
@@ -69,6 +72,7 @@ const Home = () => {
     setGameStarted(false);
     setGeneratedNumbers([]);
     setIsGenerating(false);
+    setWinner(null); 
     setTimer(0);
   };
 
@@ -143,10 +147,23 @@ const Home = () => {
     setIsGenerating(false);
   };
 
+  useEffect(() => {
+    socket.on("userWon", (data) => {
+        console.log(data);
+        setWinner(data.user);
+    });
+
+    return () => {
+        socket.disconnect();
+    };
+}, []);
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Lottery Game</h1>
-      <div className="flex items-center justify-center"></div>
+      <div className="flex items-center justify-center">
+        {winner && <p className="text-xl font-bold">Winner: {winner.userId}</p>}
+      </div>
       <div className="max-w-screen-md">
 
       {!gameStarted&&<div className="grid grid-cols-2 gap-4">
@@ -251,12 +268,11 @@ const Home = () => {
         <Button onClick={handleStopGame} disabled={!gameStarted}>
           Stop Game
         </Button>
-        <Button onClick={generateRandomNumber} disabled={!gameStarted || isGenerating}>
+        <Button onClick={generateRandomNumber} disabled={!gameStarted || isGenerating || !winner}>
           Generate Number
         </Button>
       </div>
       
-
       {/* Timer Loader */}
       {isGenerating && (
         <div className="mt-4">
